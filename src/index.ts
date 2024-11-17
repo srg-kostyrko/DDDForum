@@ -145,15 +145,42 @@ app.post("/users/edit/:userId", async (req: Request, res: Response) => {
       .status(500)
       .json({ error: "ServerError", data: undefined, success: false });
   }
-  res.end();
 });
 
 // Get a user by email
 app.get("/users", async (req: Request, res: Response) => {
-  console.log("start /users");
-  console.log(await db.select().from(usersTable));
-  console.log("end /users");
-  res.end();
+  const { email } = req.query;
+  if (!email || typeof email !== "string") {
+    return void res
+      .status(400)
+      .json({ error: "ValidationError", data: undefined, success: false });
+  }
+  try {
+
+    const [user] = await db.select().from(usersTable).where(eq(usersTable.email, email));
+    if (!user) {
+      return void res.status(404).json({
+        error: "UserNotFound",
+        data: undefined,
+        success: false,
+      });
+    }
+    return void res.status(200).json({
+      error: undefined,
+      data: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+      },
+      success: true,
+    })
+  } catch (error) {
+    return void res
+    .status(500)
+    .json({ error: "ServerError", data: undefined, success: false });
+  }
 });
 
 const port = process.env.PORT || 3000;
