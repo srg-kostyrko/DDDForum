@@ -4,11 +4,18 @@ import cors from "cors";
 import { drizzle } from "drizzle-orm/libsql";
 import { usersTable } from "./db/schema.js";
 import { randomBytes } from "node:crypto";
-import { LibsqlError } from "@libsql/client";
-import { isLibsqlError } from "./utils.js";
 import { eq } from "drizzle-orm";
+import { LibsqlError } from "@libsql/client";
 
 const db = drizzle(process.env.DB_FILE_NAME!);
+
+enum Errors {
+  UserNotFound = "UserNotFound",
+  ValidationError = "ValidationError",
+  ServerError = "ServerError",
+  UsernameAlreadyTaken = "UsernameAlreadyTaken",
+  EmailAlreadyInUse = "EmailAlreadyInUse",
+}
 
 const app = express();
 app.use(express.json());
@@ -16,20 +23,10 @@ app.use(cors());
 
 // Create a new user
 app.post("/users/new", async (req: Request, res: Response) => {
-  if (!req.body) {
+  if (!req.body || !isValidUsedData(req.body)) {
     return void res
       .status(400)
-      .json({ error: "ValidationError", data: undefined, success: false });
-  }
-  if (
-    !req.body.username ||
-    !req.body.email ||
-    !req.body.firstName ||
-    !req.body.lastName
-  ) {
-    return void res
-      .status(400)
-      .json({ error: "ValidationError", data: undefined, success: false });
+      .json(buildErrorResponse(Errors.ValidationError));
   }
   const user: typeof usersTable.$inferInsert = {
     username: req.body.username,
@@ -40,58 +37,39 @@ app.post("/users/new", async (req: Request, res: Response) => {
   };
   try {
     const [newUser] = await db.insert(usersTable).values(user).returning();
-    return void res.status(201).json({
-      error: undefined,
-      data: {
+    return void res.status(201).json(
+      buildDataResponse({
         id: newUser.id,
         username: newUser.username,
         email: newUser.email,
         firstName: newUser.firstName,
         lastName: newUser.lastName,
-      },
-      success: true,
-    });
+      })
+    );
   } catch (error) {
     if (isLibsqlError(error)) {
-      console.log(error);
       if (error.code === "SQLITE_CONSTRAINT_UNIQUE") {
         if (error.message.includes("users_table.username")) {
-          return void res.status(409).json({
-            error: "UsernameAlreadyTaken",
-            data: undefined,
-            success: false,
-          });
+          return void res
+            .status(409)
+            .json(buildErrorResponse(Errors.UsernameAlreadyTaken));
         } else if (error.message.includes("users_table.email")) {
-          return void res.status(409).json({
-            error: "EmailAlreadyInUse",
-            data: undefined,
-            success: false,
-          });
+          return void res
+            .status(409)
+            .json(buildErrorResponse(Errors.EmailAlreadyInUse));
         }
       }
     }
-    return void res
-      .status(500)
-      .json({ error: "ServerError", data: undefined, success: false });
+    return void res.status(500).json(buildErrorResponse(Errors.ServerError));
   }
 });
 
 // Edit a user
 app.post("/users/edit/:userId", async (req: Request, res: Response) => {
-  if (!req.body) {
+  if (!req.body || !isValidUsedData(req.body)) {
     return void res
       .status(400)
-      .json({ error: "ValidationError", data: undefined, success: false });
-  }
-  if (
-    !req.body.username ||
-    !req.body.email ||
-    !req.body.firstName ||
-    !req.body.lastName
-  ) {
-    return void res
-      .status(400)
-      .json({ error: "ValidationError", data: undefined, success: false });
+      .json(buildErrorResponse(Errors.ValidationError));
   }
   try {
     const [updatedUser] = await db
@@ -105,45 +83,32 @@ app.post("/users/edit/:userId", async (req: Request, res: Response) => {
       .where(eq(usersTable.id, parseInt(req.params.userId)))
       .returning();
     if (!updatedUser) {
-      return void res.status(404).json({
-        error: "UserNotFound",
-        data: undefined,
-        success: false,
-      });
+      return void res.status(404).json(buildErrorResponse(Errors.UserNotFound));
     }
-    return void res.status(200).json({
-      error: undefined,
-      data: {
+    return void res.status(200).json(
+      buildDataResponse({
         id: updatedUser.id,
         username: updatedUser.username,
         email: updatedUser.email,
         firstName: updatedUser.firstName,
         lastName: updatedUser.lastName,
-      },
-      success: true,
-    });
+      })
+    );
   } catch (error) {
     if (isLibsqlError(error)) {
-      console.log(error);
       if (error.code === "SQLITE_CONSTRAINT_UNIQUE") {
         if (error.message.includes("users_table.username")) {
-          return void res.status(409).json({
-            error: "UsernameAlreadyTaken",
-            data: undefined,
-            success: false,
-          });
+          return void res
+            .status(409)
+            .json(buildErrorResponse(Errors.UsernameAlreadyTaken));
         } else if (error.message.includes("users_table.email")) {
-          return void res.status(409).json({
-            error: "EmailAlreadyInUse",
-            data: undefined,
-            success: false,
-          });
+          return void res
+            .status(409)
+            .json(buildErrorResponse(Errors.EmailAlreadyInUse));
         }
       }
     }
-    return void res
-      .status(500)
-      .json({ error: "ServerError", data: undefined, success: false });
+    return void res.status(500).json(buildErrorResponse(Errors.ServerError));
   }
 });
 
@@ -153,33 +118,27 @@ app.get("/users", async (req: Request, res: Response) => {
   if (!email || typeof email !== "string") {
     return void res
       .status(400)
-      .json({ error: "ValidationError", data: undefined, success: false });
+      .json(buildErrorResponse(Errors.ValidationError));
   }
   try {
-
-    const [user] = await db.select().from(usersTable).where(eq(usersTable.email, email));
+    const [user] = await db
+      .select()
+      .from(usersTable)
+      .where(eq(usersTable.email, email));
     if (!user) {
-      return void res.status(404).json({
-        error: "UserNotFound",
-        data: undefined,
-        success: false,
-      });
+      return void res.status(404).json(buildErrorResponse(Errors.UserNotFound));
     }
-    return void res.status(200).json({
-      error: undefined,
-      data: {
+    return void res.status(200).json(
+      buildDataResponse({
         id: user.id,
         username: user.username,
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
-      },
-      success: true,
-    })
+      })
+    );
   } catch (error) {
-    return void res
-    .status(500)
-    .json({ error: "ServerError", data: undefined, success: false });
+    return void res.status(500).json(buildErrorResponse(Errors.ServerError));
   }
 });
 
@@ -188,3 +147,27 @@ const port = process.env.PORT || 3000;
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
+
+function isValidUsedData(data: any) {
+  return data.username && data.email && data.firstName && data.lastName;
+}
+
+function buildDataResponse(data: any) {
+  return {
+    error: undefined,
+    data,
+    success: true,
+  };
+}
+
+function buildErrorResponse(error: Errors) {
+  return {
+    error,
+    data: undefined,
+    success: false,
+  };
+}
+
+function isLibsqlError(err: any): err is LibsqlError {
+  return err?.libsqlError;
+}
