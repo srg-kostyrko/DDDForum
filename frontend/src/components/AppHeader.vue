@@ -1,4 +1,10 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import { useUserStore } from '@/stores/user.store';
+import { storeToRefs } from 'pinia';
+
+const userStore = useUserStore();
+const { user } = storeToRefs(userStore);
+</script>
 
 <template>
   <header class="flex justify-center items-center gap-4">
@@ -13,7 +19,13 @@
       <RouterLink to="/submit">submit</RouterLink>
     </div>
     <div>
-      <RouterLink to="/register">Join</RouterLink>
+      <div v-if="user">
+        <div>{{ user.username }}</div>
+        <u>
+          <div>logout</div>
+        </u>
+      </div>
+      <RouterLink v-else to="/register">Join</RouterLink>
     </div>
   </header>
 </template>

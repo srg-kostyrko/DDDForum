@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { RouterLink, RouterView } from 'vue-router';
 import AppHeader from './components/AppHeader.vue';
+import Toaster from '@/components/ui/toast/Toaster.vue';
 </script>
 
 <template>
@@ -9,5 +10,6 @@ import AppHeader from './components/AppHeader.vue';
     <main>
       <RouterView />
     </main>
+    <Toaster />
   </div>
 </template>

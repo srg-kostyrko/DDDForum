@@ -23,6 +23,7 @@ app.use(cors());
 
 // Create a new user
 app.post("/users/new", async (req: Request, res: Response) => {
+  console.log(req);
   if (!req.body || !isValidUsedData(req.body)) {
     return void res
       .status(400)
