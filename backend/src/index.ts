@@ -1,13 +1,12 @@
 import "dotenv/config";
 import express, { Request, Response } from "express";
 import cors from "cors";
-import { drizzle } from "drizzle-orm/libsql";
+
 import { usersTable } from "./db/schema.js";
 import { randomBytes } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { LibsqlError } from "@libsql/client";
-
-const db = drizzle(process.env.DB_FILE_NAME!);
+import { db } from "./db/index.js";
 
 enum Errors {
   UserNotFound = "UserNotFound",
