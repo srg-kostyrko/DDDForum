@@ -8,6 +8,13 @@
       "when": 1731741799780,
       "tag": "0000_abnormal_callisto",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1732439433892,
+      "tag": "0001_quiet_sabretooth",
+      "breakpoints": true
     }
   ]
 }
