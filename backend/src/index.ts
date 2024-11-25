@@ -2,9 +2,9 @@ import "dotenv/config";
 import express, { Request, Response } from "express";
 import cors from "cors";
 
-import { usersTable } from "./db/schema.js";
+import { postsTable, usersTable } from "./db/schema.js";
 import { randomBytes } from "node:crypto";
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { LibsqlError } from "@libsql/client";
 import { db } from "./db/index.js";
 
@@ -14,11 +14,37 @@ enum Errors {
   ServerError = "ServerError",
   UsernameAlreadyTaken = "UsernameAlreadyTaken",
   EmailAlreadyInUse = "EmailAlreadyInUse",
+  ClientError = "ClientError",
 }
 
 const app = express();
 app.use(express.json());
 app.use(cors());
+
+app.get("/posts", async (req: Request, res: Response) => {
+  try {
+    const { sort } = req.query;
+
+    if (sort !== "recent") {
+      return void res.status(400).json(buildErrorResponse(Errors.ClientError));
+    }
+    const posts = await db.query.postsTable.findMany({
+      orderBy: [desc(postsTable.dateCreated)],
+      with: {
+        votes: true,
+        member: {
+          with: {
+            user: true,
+          },
+        },
+        comments: true,
+      },
+    });
+    return void res.status(200).json(buildDataResponse(posts));
+  } catch (error) {
+    return void res.status(500).json(buildErrorResponse(Errors.ServerError));
+  }
+});
 
 // Create a new user
 app.post("/users/new", async (req: Request, res: Response) => {
