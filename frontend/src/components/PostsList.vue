@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useQuery } from '@tanstack/vue-query';
 import { UseTimeAgo } from '@vueuse/components';
+import AppLink from './AppLink.vue';
 
 const { data } = useQuery({
   queryKey: ['posts'],
@@ -36,12 +37,12 @@ const { data } = useQuery({
         <div class="pr-4">
           <UseTimeAgo v-slot="{ timeAgo }" :time="post.dateCreated"> {{ timeAgo }} </UseTimeAgo>
         </div>
-        <RouterLink
+        <AppLink
           :to="{ name: '/memeber/[username]', params: { username: post.member.user.username } }"
           class="px-4"
         >
           by {{ post.member.user.username }}
-        </RouterLink>
+        </AppLink>
         <div class="px-4">{{ post.comments.length }} comments</div>
       </div>
     </div>

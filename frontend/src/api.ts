@@ -2,7 +2,7 @@ import { useMutation } from '@tanstack/vue-query';
 import type { User } from './contracts/user';
 
 export function useRegisterMutation() {
-  const { mutateAsync } = useMutation({
+  const { mutateAsync, ...rest } = useMutation({
     mutationFn: async (values: User) => {
       const response = await fetch('/api/users/new', {
         method: 'POST',
@@ -17,5 +17,5 @@ export function useRegisterMutation() {
       }
     },
   });
-  return { register: mutateAsync };
+  return { register: mutateAsync, ...rest };
 }

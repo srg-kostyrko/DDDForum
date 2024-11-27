@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useUserStore } from '@/stores/user.store';
 import { storeToRefs } from 'pinia';
+import AppLink from './AppLink.vue';
 
 const userStore = useUserStore();
 const { user } = storeToRefs(userStore);
@@ -9,14 +10,14 @@ const { user } = storeToRefs(userStore);
 <template>
   <header class="flex justify-center items-center gap-4">
     <div class="max-w-16">
-      <RouterLink to="/">
+      <AppLink to="/">
         <img src="/dddforumlogo.png" />
-      </RouterLink>
+      </AppLink>
     </div>
     <div>
       <h1 class="text-3xl font-bold">Domain-Driven Designers</h1>
       <h3 class="text-lg font-bold">Where awesome domain driven designers are made</h3>
-      <RouterLink to="/submit">submit</RouterLink>
+      <AppLink to="/submit">submit</AppLink>
     </div>
     <div>
       <div v-if="user">
@@ -25,7 +26,7 @@ const { user } = storeToRefs(userStore);
           <div>logout</div>
         </u>
       </div>
-      <RouterLink v-else to="/register">Join</RouterLink>
+      <AppLink v-else to="/register">Join</AppLink>
     </div>
   </header>
 </template>

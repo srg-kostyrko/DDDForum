@@ -5,7 +5,12 @@ import { Input } from '@/components/ui/input';
 import { userRegisterShema, type User } from '@/contracts/user';
 import { toTypedSchema } from '@vee-validate/zod';
 import { useForm } from 'vee-validate';
+import AppLink from './AppLink.vue';
+import { Loader2 } from 'lucide-vue-next';
 
+defineProps<{
+  isPending: boolean;
+}>();
 const emit = defineEmits<{
   submit: [User];
 }>();
@@ -61,9 +66,12 @@ const onSubmit = form.handleSubmit((values) => {
     <div class="flex justify-between">
       <div class="to-login">
         <div>Already have an account?</div>
-        <RouterLink :to="{ name: '/login' }">login</RouterLink>
+        <AppLink :to="{ name: '/login' }">login</AppLink>
       </div>
-      <Button type="submit">Submit</Button>
+      <Button :disabled="isPending" type="submit">
+        <Loader2 v-if="isPending" class="mr-2 h-4 w-4 animate-spin" />
+        <span v-else>Submit</span>
+      </Button>
     </div>
   </form>
 </template>
