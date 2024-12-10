@@ -13,7 +13,9 @@
     "test": "jest",
     "test:dev": "jest --watchAll",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate"
+    "db:migrate": "drizzle-kit migrate",
+    "db:seed": "node --loader ts-node/esm src/db/seed.ts",
+    "db:reset": "rimraf local.db && npm run db:generate && npm run db:migrate && npm run db:seed"
   },
   "husky": {
     "hooks": {
