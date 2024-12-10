@@ -9,7 +9,6 @@ const { data } = useQuery({
     const request = await fetch('/api/posts?sort=recent');
     const json = await request.json();
     if (request.ok && json.success) {
-      console.log(json);
       return json.data;
     }
     throw new Error(json.error);
