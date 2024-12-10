@@ -3,8 +3,12 @@
 ## Project Setup
 
 ```sh
-npm install
+npm ci
 ```
+
+## Create `.env` file
+
+Use `.env.example` as reference
 
 ## Run migrations
 
