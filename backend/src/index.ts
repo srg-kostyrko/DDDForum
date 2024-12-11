@@ -72,13 +72,14 @@ app.post("/users/new", async (req: Request, res: Response) => {
       })
     );
   } catch (error) {
+    console.error(error);
     if (isLibsqlError(error)) {
       if (error.code === "SQLITE_CONSTRAINT_UNIQUE") {
-        if (error.message.includes("users_table.username")) {
+        if (error.message.includes("users.username")) {
           return void res
             .status(409)
             .json(buildErrorResponse(Errors.UsernameAlreadyTaken));
-        } else if (error.message.includes("users_table.email")) {
+        } else if (error.message.includes("users.email")) {
           return void res
             .status(409)
             .json(buildErrorResponse(Errors.EmailAlreadyInUse));
@@ -120,13 +121,14 @@ app.post("/users/edit/:userId", async (req: Request, res: Response) => {
       })
     );
   } catch (error) {
+    console.log(error);
     if (isLibsqlError(error)) {
       if (error.code === "SQLITE_CONSTRAINT_UNIQUE") {
-        if (error.message.includes("users_table.username")) {
+        if (error.message.includes("users.username")) {
           return void res
             .status(409)
             .json(buildErrorResponse(Errors.UsernameAlreadyTaken));
-        } else if (error.message.includes("users_table.email")) {
+        } else if (error.message.includes("users.email")) {
           return void res
             .status(409)
             .json(buildErrorResponse(Errors.EmailAlreadyInUse));
