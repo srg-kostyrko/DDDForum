@@ -5,6 +5,10 @@ import AppLink from './AppLink.vue';
 
 const userStore = useUserStore();
 const { user } = storeToRefs(userStore);
+
+function logout() {
+  userStore.user = null;
+}
 </script>
 
 <template>
@@ -23,7 +27,7 @@ const { user } = storeToRefs(userStore);
       <div v-if="user">
         <div>{{ user.username }}</div>
         <u>
-          <div>logout</div>
+          <a href="#" @click="logout">logout</a>
         </u>
       </div>
       <AppLink v-else to="/register">Join</AppLink>
