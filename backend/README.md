@@ -1,3 +1,29 @@
 # Code-First
 
-> This is where you'll write your code-first implementation of the User Story from DDDForum. You can [see the assignment page for more details](https://www.essentialist.dev/products/the-software-essentialist/categories/2153149734/posts/2168948146).
+## Project Setup
+
+```sh
+npm ci
+```
+
+## Create `.env` file
+
+Use `.env.example` as reference
+
+## Run migrations
+
+```sh
+npm run db:migrate
+```
+
+## Seed database with test data
+
+```sh
+npm run db:seed
+```
+
+## Start server with nodemon for reloads on file changes
+
+```sh
+npm run start:dev
+```

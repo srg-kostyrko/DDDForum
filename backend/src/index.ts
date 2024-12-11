@@ -1,13 +1,12 @@
 import "dotenv/config";
 import express, { Request, Response } from "express";
 import cors from "cors";
-import { drizzle } from "drizzle-orm/libsql";
-import { usersTable } from "./db/schema.js";
-import { randomBytes } from "node:crypto";
-import { eq } from "drizzle-orm";
-import { LibsqlError } from "@libsql/client";
 
-const db = drizzle(process.env.DB_FILE_NAME!);
+import { postsTable, usersTable } from "./db/schema.js";
+import { randomBytes } from "node:crypto";
+import { desc, eq } from "drizzle-orm";
+import { LibsqlError } from "@libsql/client";
+import { db } from "./db/index.js";
 
 enum Errors {
   UserNotFound = "UserNotFound",
@@ -15,11 +14,37 @@ enum Errors {
   ServerError = "ServerError",
   UsernameAlreadyTaken = "UsernameAlreadyTaken",
   EmailAlreadyInUse = "EmailAlreadyInUse",
+  ClientError = "ClientError",
 }
 
 const app = express();
 app.use(express.json());
 app.use(cors());
+
+app.get("/posts", async (req: Request, res: Response) => {
+  try {
+    const { sort } = req.query;
+
+    if (sort !== "recent") {
+      return void res.status(400).json(buildErrorResponse(Errors.ClientError));
+    }
+    const posts = await db.query.postsTable.findMany({
+      orderBy: [desc(postsTable.dateCreated)],
+      with: {
+        votes: true,
+        member: {
+          with: {
+            user: true,
+          },
+        },
+        comments: true,
+      },
+    });
+    return void res.status(200).json(buildDataResponse(posts));
+  } catch (error) {
+    return void res.status(500).json(buildErrorResponse(Errors.ServerError));
+  }
+});
 
 // Create a new user
 app.post("/users/new", async (req: Request, res: Response) => {
@@ -47,13 +72,14 @@ app.post("/users/new", async (req: Request, res: Response) => {
       })
     );
   } catch (error) {
+    console.error(error);
     if (isLibsqlError(error)) {
       if (error.code === "SQLITE_CONSTRAINT_UNIQUE") {
-        if (error.message.includes("users_table.username")) {
+        if (error.message.includes("users.username")) {
           return void res
             .status(409)
             .json(buildErrorResponse(Errors.UsernameAlreadyTaken));
-        } else if (error.message.includes("users_table.email")) {
+        } else if (error.message.includes("users.email")) {
           return void res
             .status(409)
             .json(buildErrorResponse(Errors.EmailAlreadyInUse));
@@ -95,13 +121,14 @@ app.post("/users/edit/:userId", async (req: Request, res: Response) => {
       })
     );
   } catch (error) {
+    console.log(error);
     if (isLibsqlError(error)) {
       if (error.code === "SQLITE_CONSTRAINT_UNIQUE") {
-        if (error.message.includes("users_table.username")) {
+        if (error.message.includes("users.username")) {
           return void res
             .status(409)
             .json(buildErrorResponse(Errors.UsernameAlreadyTaken));
-        } else if (error.message.includes("users_table.email")) {
+        } else if (error.message.includes("users.email")) {
           return void res
             .status(409)
             .json(buildErrorResponse(Errors.EmailAlreadyInUse));
